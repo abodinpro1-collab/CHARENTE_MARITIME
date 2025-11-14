@@ -1081,32 +1081,58 @@ with tab3:
     # Communes hot-spots
     st.markdown('<h3 class="section-title">🔥 Communes "Hot-Spots"</h3>', unsafe_allow_html=True)
     
-    commune_stats = df_filtered.groupby('Commune').agg({
-        'ID': 'count',
-        'Menages': 'sum',
-        'Urgency_Score': 'mean'
-    }).sort_values('ID', ascending=False).head(10).reset_index()
+    col1, col2 = st.columns(2)
     
-    commune_stats.columns = ['Commune', 'Dossiers', 'Ménages', 'Urgence Moy']
+    with col1:
+        commune_stats = df_filtered.groupby('Commune').agg({
+            'ID': 'count',
+            'Menages': 'sum',
+            'Urgency_Score': 'mean'
+        }).sort_values('ID', ascending=False).head(10).reset_index()
+        
+        commune_stats.columns = ['Commune', 'Dossiers', 'Ménages', 'Urgence Moy']
+        
+        fig = px.scatter(
+            commune_stats,
+            x='Dossiers',
+            y='Urgence Moy',
+            size='Ménages',
+            text='Commune',
+            title="Communes: Fréquence vs Urgence",
+            color='Urgence Moy',
+            color_continuous_scale='RdYlGn_r',
+            size_max=50
+        )
+        fig.update_traces(textposition='top center')
+        fig.update_layout(
+            paper_bgcolor='white',
+            plot_bgcolor='white',
+            height=400
+        )
+        st.plotly_chart(fig, use_container_width=True)
     
-    fig = px.scatter(
-        commune_stats,
-        x='Dossiers',
-        y='Urgence Moy',
-        size='Ménages',
-        text='Commune',
-        title="Communes: Fréquence vs Urgence",
-        color='Urgence Moy',
-        color_continuous_scale='RdYlGn_r',
-        size_max=50
-    )
-    fig.update_traces(textposition='top center')
-    fig.update_layout(
-        paper_bgcolor='white',
-        plot_bgcolor='white',
-        height=400
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    with col2:
+        # 🔧 NEW: Statut du terrain (Privé/Public)
+        terrain_stats = df_filtered['Terrain'].value_counts().reset_index()
+        terrain_stats.columns = ['Terrain', 'Nombre']
+        
+        if len(terrain_stats) > 0:
+            fig_terrain = px.pie(
+                terrain_stats,
+                values='Nombre',
+                names='Terrain',
+                title="Répartition par Statut du Terrain",
+                color_discrete_sequence=['#3498db', '#e74c3c', '#27ae60', '#f39c12'],
+                hole=0.3
+            )
+            fig_terrain.update_layout(
+                paper_bgcolor='white',
+                plot_bgcolor='white',
+                height=400
+            )
+            st.plotly_chart(fig_terrain, use_container_width=True)
+        else:
+            st.info("Aucune donnée de terrain disponible")
     
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     
